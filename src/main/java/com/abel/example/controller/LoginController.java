@@ -3,7 +3,7 @@ package com.abel.example.controller;
 
 import com.abel.example.bean.Result;
 import com.abel.example.bean.User;
-import com.abel.example.service.UserService;
+import com.abel.example.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;

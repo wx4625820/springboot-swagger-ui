@@ -1,8 +1,7 @@
-package com.abel.example.serviceImpl;
+package com.abel.example.service.user;
 
 import com.abel.example.bean.User;
 import com.abel.example.dao.UserMapper;
-import com.abel.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

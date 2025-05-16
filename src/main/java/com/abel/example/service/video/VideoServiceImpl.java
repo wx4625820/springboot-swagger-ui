@@ -1,6 +1,5 @@
-package com.abel.example.serviceImpl;
+package com.abel.example.service.video;
 
-import com.abel.example.service.VideoService;
 import org.springframework.stereotype.Service;
 
 @Service

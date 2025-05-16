@@ -1,7 +1,7 @@
 package com.abel.example.controller;
 
 import com.abel.example.bean.User;
-import com.abel.example.service.VideoService;
+import com.abel.example.service.video.VideoService;
 import com.alibaba.fastjson.JSON;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

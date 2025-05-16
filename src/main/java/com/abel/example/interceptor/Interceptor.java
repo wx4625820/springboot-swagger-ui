@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 @Component
 @Aspect
-public class MyInterceptor {
+public class Interceptor {
 
     @Pointcut("within (com.abel.example.controller..*) && !within(com.abel.example.controller.LoginController)")
     public void pointCut() {

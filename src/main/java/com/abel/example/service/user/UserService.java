@@ -1,8 +1,7 @@
-package com.abel.example.service;
+package com.abel.example.service.user;
 
 import com.abel.example.bean.User;
 
-import java.util.List;
 
 /**
  * The Interface UserService.
