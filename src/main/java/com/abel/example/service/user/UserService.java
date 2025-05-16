@@ -1,10 +1,11 @@
 package com.abel.example.service.user;
 
-import com.abel.example.bean.User;
+import com.abel.example.model.entity.User;
 
 
 /**
- * The Interface UserService.
+ * @auther wangxu
+ * @date 2025/05/16
  */
 public interface UserService {
 

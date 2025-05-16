@@ -1,10 +1,10 @@
-package com.abel.example.bean;
+package com.abel.example.model.entity;
 
 import java.io.Serializable;
 
 /**
- * @auther TyCoding
- * @date 2018/9/28
+ * @auther wangxu
+ * @date 2025/05/16
  */
 public class User implements Serializable {
 

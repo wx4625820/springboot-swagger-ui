@@ -41,7 +41,7 @@
         <dependency>
             <groupId>com.qiniu</groupId>
             <artifactId>qiniu-java-sdk</artifactId>
-            <version>[7.16.0, 7.16.99]</version>
+            <version>7.16.0</version>
         </dependency>
 
         <dependency>
@@ -74,6 +74,20 @@
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>2.0.57</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version> <!-- 建议使用最新稳定版 -->
+            <scope>provided</scope> <!-- 编译时依赖，不打包到产物中 -->
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>31.1-jre</version> <!-- 使用最新的版本号 -->
         </dependency>
     </dependencies>
 </project>

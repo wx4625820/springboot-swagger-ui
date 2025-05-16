@@ -1,8 +1,8 @@
 package com.abel.example.controller;
 
 
-import com.abel.example.bean.Result;
-import com.abel.example.bean.User;
+import com.abel.example.model.response.Result;
+import com.abel.example.model.entity.User;
 import com.abel.example.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

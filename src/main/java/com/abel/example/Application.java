@@ -9,10 +9,11 @@ import org.springframework.context.annotation.ComponentScan;
 
 import static org.springframework.boot.SpringApplication.run;
 
-/**
- * Created by yangyibo on 17/1/17.
- */
 
+/**
+ * @auther wangxu
+ * @date 2025/05/16
+ */
 @SpringBootApplication
 @EnableCaching
 @MapperScan("com.abel.example.dao")

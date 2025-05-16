@@ -1,6 +1,6 @@
 package com.abel.example.interceptor;
 
-import com.abel.example.bean.User;
+import com.abel.example.model.entity.User;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -16,8 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * 自定义拦截器，实现简单的登录拦截
  *
- * @auther TyCoding
- * @date 2018/9/29
+ * @auther wangxu
+ * @date 2025/05/16
  */
 @Component
 @Aspect

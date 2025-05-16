@@ -1,15 +1,14 @@
 package com.abel.example.service.user;
 
-import com.abel.example.bean.User;
+import com.abel.example.model.entity.User;
 import com.abel.example.dao.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
 /**
- * @author abel
- * @ClassName UserServiceImpl
- * @date 2016年11月10日
+ * @auther wangxu
+ * @date 2025/05/16
  */
 @Service
 public class UserServiceImpl implements UserService {

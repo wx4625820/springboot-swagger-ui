@@ -1,13 +1,13 @@
 package com.abel.example.dao;
 
-import com.abel.example.bean.User;
+import com.abel.example.model.entity.User;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 
 
 /**
- * @auther TyCoding
- * @date 2018/9/28
+ * @auther wangxu
+ * @date 2025/05/16
  */
 public interface UserMapper {
 
