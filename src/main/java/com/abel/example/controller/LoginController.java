@@ -1,7 +1,8 @@
 package com.abel.example.controller;
 
 
-import com.abel.example.model.response.Result;
+import com.abel.example.common.enums.ResultEnum;
+import com.abel.example.model.response.ResponseMessage;
 import com.abel.example.model.entity.User;
 import com.abel.example.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,17 +35,17 @@ public class LoginController {
     )
     @PostMapping("/login")
     @ResponseBody
-    public Result login(@RequestParam("username") String username, @RequestParam("password") String password) {
+    public ResponseMessage login(@RequestParam("username") String username, @RequestParam("password") String password) {
         System.out.println("username:" + username + ", password:" + password);
         User user = userService.getUserByUserName(username);
         if (user != null) {
             if (user.getPassword().equals(password)) {
                 ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
                 attributes.getRequest().getSession().setAttribute("user", user); //将登陆用户信息存入到session域对象中
-                return new Result(true, user.getUsername());
+                return ResponseMessage.success("username:" + username + "登录成功");
             }
         }
-        return new Result(false, "登录失败");
+        return ResponseMessage.error("username:" + username + "登录失败");
     }
 
     /**
@@ -76,16 +77,16 @@ public class LoginController {
     )
     @ResponseBody
     @PostMapping("/register")
-    public Result register(@RequestParam("username") String username, @RequestParam("password") String password) {
+    public ResponseMessage register(@RequestParam("username") String username, @RequestParam("password") String password) {
         try {
             userService.create(new User(username, password));
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             attributes.getRequest().getSession().setAttribute("user", new User(username, password)); //将登陆用户信息存入到session域对象中
-            return new Result(true, username);
+            return ResponseMessage.success(username);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new Result(false, "发生未知错误");
+        return ResponseMessage.error(ResultEnum.SYSTEM_ERROR.getMsg());
     }
 
     /**
@@ -123,13 +124,13 @@ public class LoginController {
     )
     @ResponseBody
     @PostMapping("/query")
-    public Result query(@RequestParam("username") String username) {
+    public ResponseMessage query(@RequestParam("username") String username) {
         try {
             User user = userService.getUserByUserName(username);
-            return new Result(true, user.getUsername() + "_" + user.getPassword());
+            return ResponseMessage.success("username:" + user.getUsername() + ",password:" + user.getPassword());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new Result(false, "发生未知错误");
+        return ResponseMessage.error(ResultEnum.SYSTEM_ERROR.getMsg());
     }
 }

@@ -1,5 +1,6 @@
 package com.abel.example;
 
+import org.dromara.x.file.storage.spring.EnableFileStorage;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,6 +15,7 @@ import static org.springframework.boot.SpringApplication.run;
  * @auther wangxu
  * @date 2025/05/16
  */
+@EnableFileStorage
 @SpringBootApplication
 @EnableCaching
 @MapperScan("com.abel.example.dao")
