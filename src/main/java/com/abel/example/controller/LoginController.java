@@ -13,9 +13,13 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+/**
+ * @auther wangxu
+ * @date 2025/05/16
+ */
 @RestController
 @RequestMapping(value = "/users")
-@Tag(name = "用户管理")
+@Tag(name = "用户管理", description = "用户增删改查等")
 public class LoginController {
 
     @Autowired
@@ -29,8 +33,7 @@ public class LoginController {
      * @return
      */
     @Operation(
-            summary = "用户登录",
-            description = "通过用户名和密码进行登录验证，成功后将用户信息存入session"
+            summary = "用户登录"
     )
     @PostMapping("/login")
     public ResponseMessage login(@RequestParam("username") String username, @RequestParam("password") String password) {
@@ -47,32 +50,13 @@ public class LoginController {
     }
 
     /**
-     * 注销
-     *
-     * @return
-     */
-    @Operation(
-            summary = "用户注销",
-            description = "清除当前用户的登录会话"
-    )
-    @PostMapping("/logout")
-    public String logout() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        attributes.getRequest().getSession().removeAttribute("user");
-        return "home/login";
-    }
-
-    /**
      * 注册
      *
      * @param username
      * @param password
      * @return
      */
-    @Operation(
-            summary = "用户注册",
-            description = "创建新用户账号"
-    )
+    @Operation(summary = "用户注册")
     @PostMapping("/register")
     public ResponseMessage register(@RequestParam("username") String username, @RequestParam("password") String password) {
         try {
@@ -107,4 +91,18 @@ public class LoginController {
     public String register() {
         return "home/register";
     }
+
+    /**
+     * 注销
+     *
+     * @return
+     */
+    @Operation(summary = "用户注销")
+    @PostMapping("/logout")
+    public String logout() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        attributes.getRequest().getSession().removeAttribute("user");
+        return "home/login";
+    }
+
 }
