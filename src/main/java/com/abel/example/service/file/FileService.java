@@ -10,7 +10,7 @@ public interface FileService {
 
     String getDownloadUrl(String fileName);
 
-    CompletableFuture<String> asyncUploadFileWithProgress(MultipartFile file, String uniqueFileName);
+    CompletableFuture<String> asyncUploadFileWithProgressWrapper(MultipartFile file, String uniqueFileName);
 
     double getProgress(String taskId);
 }

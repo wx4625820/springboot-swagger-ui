@@ -57,7 +57,7 @@ public class FileUploadController {
             String originalFilename = file.getOriginalFilename();
             String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
             String uniqueFileName = taskId + fileExtension;
-            fileService.asyncUploadFileWithProgress(file, uniqueFileName)
+            fileService.asyncUploadFileWithProgressWrapper(file, uniqueFileName)
                     .whenComplete((url, ex) -> {
                         if (ex != null) {
                             log.error("FileUploadController#asyncUploadFileWithProgress fail:{}", ex.getMessage());
