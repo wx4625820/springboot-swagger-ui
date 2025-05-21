@@ -1,6 +1,7 @@
 package com.abel.example.service.file.impl;
 
 
+import com.abel.example.common.util.Utils;
 import com.abel.example.service.file.FileService;
 import com.abel.example.service.file.util.ProgressInputStream;
 import com.abel.example.service.file.util.ProgressTracker;
@@ -61,25 +62,12 @@ public class FileServiceImpl implements FileService {
                             .build());
 
             // 返回预签名下载URL（默认7天有效期）
-            return getDownloadUrl(uniqueFileName, 7, TimeUnit.DAYS);
+            return getDownloadUrl(uniqueFileName);
         } catch (Exception e) {
             log.error("FileServiceImpl#uploadFile e:{}", e.getMessage());
             throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
         }
     }
-
-
-    /**
-     * 获取文件的下载URL（默认7天有效期）
-     *
-     * @param fileName 存储在MinIO中的文件名
-     * @return 带签名的下载URL
-     */
-    @Override
-    public String getDownloadUrl(String fileName) {
-        return getDownloadUrl(fileName, 7, TimeUnit.DAYS);
-    }
-
 
     private void updateProgress(String taskId, double progress) {
         progressCache.put(taskId, progress);
@@ -93,7 +81,7 @@ public class FileServiceImpl implements FileService {
 
     @Async
     @Override
-    public CompletableFuture<String> uploadFileWithProgress(MultipartFile file, String uniqueFileName) {
+    public CompletableFuture<String> asyncUploadFileWithProgress(MultipartFile file, String uniqueFileName) {
         return CompletableFuture.supplyAsync(() -> {
             // 1. 将MultipartFile内容复制到内存或临时文件
             File tempFile = null;
@@ -137,7 +125,7 @@ public class FileServiceImpl implements FileService {
                 }
             } catch (Exception e) {
                 updateProgress(uniqueFileName, -1);
-                log.error("FileServiceImpl#uploadFileWithProgress e:{}", e.getMessage());
+                log.error("FileServiceImpl#asyncUploadFileWithProgress e:{}", e.getMessage());
                 throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
             } finally {
                 // 8. 清理临时文件
@@ -149,22 +137,21 @@ public class FileServiceImpl implements FileService {
     }
 
     /**
-     * 获取文件的下载URL（预签名方式）
+     * 获取文件的下载URL（非签名方式）
      *
      * @param fileName 存储在MinIO中的文件名
-     * @param duration 有效期时长
-     * @param unit     时间单位
-     * @return 带签名的下载URL
+     * @return 不带签名的下载URL
      */
-    private String getDownloadUrl(String fileName, long duration, TimeUnit unit) {
+    @Override
+    public String getDownloadUrl(String fileName) {
         try {
-            return minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(bucketName)
-                            .object(fileName)
-                            .expiry((int) unit.toSeconds(duration))
-                            .build());
+
+            String minioHost = Utils.getLocalIP();
+            // 构建不带签名的URL
+            return String.format("http://%s:9000/%s/%s",
+                    minioHost,
+                    bucketName,
+                    fileName);
         } catch (Exception e) {
             log.error("FileServiceImpl#getDownloadUrl e:{}", e.getMessage());
             throw new RuntimeException("生成下载链接失败: " + e.getMessage(), e);

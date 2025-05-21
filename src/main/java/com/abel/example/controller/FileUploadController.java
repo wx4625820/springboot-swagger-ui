@@ -30,7 +30,7 @@ public class FileUploadController {
     private FileService fileService;
 
 
-    @Operation(summary = "上传视频文件")
+    @Operation(summary = "同步上传视频文件")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "upload")
     public ResponseMessage uploadFile(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
@@ -47,7 +47,7 @@ public class FileUploadController {
 
     @Operation(summary = "异步上传视频文件")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "async-upload")
-    public ResponseMessage uploadFileWithProgress(@RequestParam("file") MultipartFile file) {
+    public ResponseMessage asyncUploadFileWithProgress(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseMessage.error("上传的文件为空");
         }
@@ -57,12 +57,12 @@ public class FileUploadController {
             String originalFilename = file.getOriginalFilename();
             String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
             String uniqueFileName = taskId + fileExtension;
-            fileService.uploadFileWithProgress(file, uniqueFileName)
+            fileService.asyncUploadFileWithProgress(file, uniqueFileName)
                     .whenComplete((url, ex) -> {
                         if (ex != null) {
-                            log.error("uploadFileWithProgress#uploadFileWithProgress fail:{}", ex.getMessage());
+                            log.error("FileUploadController#asyncUploadFileWithProgress fail:{}", ex.getMessage());
                         } else {
-                            log.info("uploadFileWithProgress#uploadFileWithProgress success,url:{}", url);
+                            log.info("FileUploadController#asyncUploadFileWithProgress success,url:{}", url);
                         }
                     });
 
@@ -84,7 +84,7 @@ public class FileUploadController {
         return ResponseMessage.success(progress);
     }
 
-    @Operation(summary = "获取文件的下载URL（默认7天有效期）")
+    @Operation(summary = "获取文件的下载URL")
     @GetMapping(value = "file-download-url")
     public ResponseMessage getDownloadUrl(@RequestParam String uniqueFileName) {
         try {
