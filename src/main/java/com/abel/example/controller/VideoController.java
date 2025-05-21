@@ -7,18 +7,20 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 
-@Controller
+
+@RestController
 @RequestMapping("/video")
 @Tag(name = "视频管理", description = "视频上传、下载等操作") // 控制器级别的描述
 public class VideoController {
 
     @Autowired
+    @Qualifier("minIOServiceImpl")
     private FileService fileService;
 
 
@@ -27,7 +29,6 @@ public class VideoController {
             description = "接受视频文件并保存到服务器指定目录"
     )
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseBody
     public ResponseMessage<Object> uploadFile(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseMessage.error("上传的文件为空");
@@ -38,6 +39,21 @@ public class VideoController {
             return ResponseMessage.success(result);
         } else {
             return ResponseMessage.error(ResultEnum.SYSTEM_ERROR.getMsg());
+        }
+    }
+
+
+    @Operation(
+            summary = "下载视频文件",
+            description = "获取下载链接"
+    )
+    @GetMapping("/download-url")
+    public ResponseMessage<Object> getDownloadUrl(@RequestParam String fileName) {
+        try {
+            String downloadUrl = fileService.getDownloadUrl(fileName);
+            return ResponseMessage.success(downloadUrl);
+        } catch (Exception e) {
+            return ResponseMessage.error(e.getMessage());
         }
     }
 }

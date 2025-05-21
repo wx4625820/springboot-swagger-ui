@@ -95,5 +95,11 @@
             <artifactId>guava</artifactId>
             <version>31.1-jre</version> <!-- 使用最新的版本号 -->
         </dependency>
+
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.17</version>
+        </dependency>
     </dependencies>
 </project>

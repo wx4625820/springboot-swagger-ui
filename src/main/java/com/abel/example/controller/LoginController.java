@@ -8,13 +8,12 @@ import com.abel.example.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@Controller
+@RestController
 @RequestMapping(value = "/users")
 @Tag(name = "用户管理")
 public class LoginController {
@@ -34,7 +33,6 @@ public class LoginController {
             description = "通过用户名和密码进行登录验证，成功后将用户信息存入session"
     )
     @PostMapping("/login")
-    @ResponseBody
     public ResponseMessage login(@RequestParam("username") String username, @RequestParam("password") String password) {
         System.out.println("username:" + username + ", password:" + password);
         User user = userService.getUserByUserName(username);
@@ -75,7 +73,6 @@ public class LoginController {
             summary = "用户注册",
             description = "创建新用户账号"
     )
-    @ResponseBody
     @PostMapping("/register")
     public ResponseMessage register(@RequestParam("username") String username, @RequestParam("password") String password) {
         try {
@@ -90,7 +87,7 @@ public class LoginController {
     }
 
     /**
-     * 登录页
+     * 登录页 TODO
      *
      * @return
      */
@@ -101,7 +98,7 @@ public class LoginController {
     }
 
     /**
-     * 注册页面
+     * 注册页面 TODO
      *
      * @return
      */
@@ -109,28 +106,5 @@ public class LoginController {
     @GetMapping("/register")
     public String register() {
         return "home/register";
-    }
-
-
-    /**
-     * 查询用户
-     *
-     * @param username
-     * @return
-     */
-    @Operation(
-            summary = "查询用户",
-            description = "根据用户名查询用户"
-    )
-    @ResponseBody
-    @PostMapping("/query")
-    public ResponseMessage query(@RequestParam("username") String username) {
-        try {
-            User user = userService.getUserByUserName(username);
-            return ResponseMessage.success("username:" + user.getUsername() + ",password:" + user.getPassword());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return ResponseMessage.error(ResultEnum.SYSTEM_ERROR.getMsg());
     }
 }

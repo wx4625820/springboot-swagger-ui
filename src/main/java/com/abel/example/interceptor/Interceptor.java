@@ -1,6 +1,8 @@
 package com.abel.example.interceptor;
 
+import com.abel.example.common.enums.ResultEnum;
 import com.abel.example.model.entity.User;
+import com.abel.example.model.response.ResponseMessage;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -37,7 +39,7 @@ public class Interceptor {
         User user = (User) request.getSession().getAttribute("user");
         if (user == null) {
             // 所有请求返回 401，前端控制跳转
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("请先登录");
+            return ResponseMessage.error(ResultEnum.UNAUTHORIZED.getCode(), ResultEnum.UNAUTHORIZED.getMsg());
         }
         System.out.println("-----------用户已登录-----------");
 

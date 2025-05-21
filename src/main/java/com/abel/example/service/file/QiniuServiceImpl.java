@@ -1,6 +1,5 @@
 package com.abel.example.service.file;
 
-import com.alibaba.fastjson.JSON;
 import org.dromara.x.file.storage.core.FileInfo;
 import org.dromara.x.file.storage.core.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,7 @@ import java.util.Objects;
 
 
 @Service
-public class FileServiceImpl implements FileService {
+public class QiniuServiceImpl implements FileService {
 
     @Autowired
     private FileStorageService fileStorageService;//注入实列
@@ -26,5 +25,10 @@ public class FileServiceImpl implements FileService {
             System.out.println("上传视频出错：" + e.getMessage());
             return null;
         }
+    }
+
+    @Override
+    public String getDownloadUrl(String fileName) {
+        return null;
     }
 }
