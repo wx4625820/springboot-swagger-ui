@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * @date 2025/05/16
  */
 @RestController
-@RequestMapping(value = "/users")
+@RequestMapping(value = "users")
 @Tag(name = "用户管理", description = "用户增删改查等")
 public class LoginController {
 
@@ -32,10 +32,8 @@ public class LoginController {
      * @param password
      * @return
      */
-    @Operation(
-            summary = "用户登录"
-    )
-    @PostMapping("/login")
+    @Operation(summary = "用户登录")
+    @PostMapping(value = "login")
     public ResponseMessage login(@RequestParam("username") String username, @RequestParam("password") String password) {
         System.out.println("username:" + username + ", password:" + password);
         User user = userService.getUserByUserName(username);
@@ -57,7 +55,7 @@ public class LoginController {
      * @return
      */
     @Operation(summary = "用户注册")
-    @PostMapping("/register")
+    @PostMapping(value = "register")
     public ResponseMessage register(@RequestParam("username") String username, @RequestParam("password") String password) {
         try {
             userService.create(new User(username, password));
@@ -76,7 +74,7 @@ public class LoginController {
      * @return
      */
     @Operation(summary = "获取登录页信息")
-    @GetMapping("/login")
+    @GetMapping(value = "login")
     public String login() {
         return "home/login";
     }
@@ -87,7 +85,7 @@ public class LoginController {
      * @return
      */
     @Operation(summary = "获取注册页信息")
-    @GetMapping("/register")
+    @GetMapping(value = "register")
     public String register() {
         return "home/register";
     }
@@ -98,11 +96,10 @@ public class LoginController {
      * @return
      */
     @Operation(summary = "用户注销")
-    @PostMapping("/logout")
+    @PostMapping(value = "logout")
     public String logout() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         attributes.getRequest().getSession().removeAttribute("user");
         return "home/login";
     }
-
 }
