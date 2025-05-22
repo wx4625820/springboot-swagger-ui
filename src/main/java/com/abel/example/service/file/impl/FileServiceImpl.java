@@ -5,8 +5,10 @@ import com.abel.example.common.util.Utils;
 import com.abel.example.service.file.FileService;
 import com.abel.example.service.file.util.ProgressInputStream;
 import com.abel.example.service.file.util.ProgressTracker;
+import com.abel.example.service.user.UserService;
 import com.google.common.collect.Maps;
 import io.minio.*;
+import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +40,10 @@ public class FileServiceImpl implements FileService {
     private String bucketName;
 
 
+    @Autowired
+    private UserService userService;
+
+
     @Override
     public String uploadFile(MultipartFile file) {
         try {
@@ -48,6 +55,7 @@ public class FileServiceImpl implements FileService {
 
             // 生成唯一文件名
             String originalFilename = file.getOriginalFilename();
+            String objectName = userService.getUserName() + "/" + originalFilename;
             // String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
             // String uniqueFileName = UUID.randomUUID() + fileExtension;
 
@@ -55,13 +63,13 @@ public class FileServiceImpl implements FileService {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(originalFilename)
+                            .object(objectName)
                             .stream(file.getInputStream(), file.getSize(), -1)
                             .contentType(file.getContentType())
                             .build());
 
-            // 返回预签名下载URL（默认7天有效期）
-            return getDownloadUrl(originalFilename);
+            // 返回预签名下载URL
+            return getDownloadUrl(objectName);
         } catch (Exception e) {
             log.error("FileServiceImpl#uploadFile e:{}", e.getMessage());
             throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
@@ -75,6 +83,47 @@ public class FileServiceImpl implements FileService {
     @Override
     public double getProgress(String originalFilename) {
         return progressCache.getOrDefault(originalFilename, 0.0);
+    }
+
+    @Override
+    public String getFile() {
+        try {
+            String userName = userService.getUserName() + "/";
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .prefix(userName)
+                            .recursive(true)
+                            .build());
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                String objectName = item.objectName();
+                return Paths.get(objectName).getFileName().toString();
+            }
+
+        } catch (Exception e) {
+            log.error("获取视频文件列表失败: {}", e.getMessage(), e);
+        }
+        return null;
+    }
+
+    @Override
+    public boolean deleteFile(String fileName) {
+        try {
+            String objectName = userService.getUserName() + "/" + fileName;
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .build());
+
+            log.info("删除文件成功: {}", fileName);
+            return true;
+        } catch (Exception e) {
+            log.error("删除文件失败: {}", e.getMessage(), e);
+            return false;
+        }
     }
 
 
@@ -91,16 +140,16 @@ public class FileServiceImpl implements FileService {
 
     @Async
     public CompletableFuture<String> asyncUploadFileWithProgress(Path tempFilePath, String contentType, long size, String originalFilename) {
+        String objectName = userService.getUserName() + "/" + originalFilename;
         return CompletableFuture.supplyAsync(() -> {
             try {
                 // 检查并创建桶
                 if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                     minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
                 }
-
                 ProgressTracker tracker = new ProgressTracker(size, bytesRead -> {
                     double progress = (double) bytesRead / size * 100;
-                    updateProgress(originalFilename, progress);
+                    updateProgress(objectName, progress);
                 });
 
                 try (InputStream fileStream = Files.newInputStream(tempFilePath);
@@ -109,15 +158,15 @@ public class FileServiceImpl implements FileService {
                     minioClient.putObject(
                             PutObjectArgs.builder()
                                     .bucket(bucketName)
-                                    .object(originalFilename)
+                                    .object(objectName)
                                     .stream(progressStream, size, -1)
                                     .contentType(contentType)
                                     .build());
 
-                    return getDownloadUrl(originalFilename);
+                    return getDownloadUrl(objectName);
                 }
             } catch (Exception e) {
-                updateProgress(originalFilename, -1);
+                updateProgress(objectName, -1);
                 log.error("FileServiceImpl#asyncUploadFileWithProgress error: {}", e.getMessage(), e);
                 throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
             } finally {
@@ -134,19 +183,18 @@ public class FileServiceImpl implements FileService {
     /**
      * 获取文件的下载URL（非签名方式）
      *
-     * @param originalFilename 存储在MinIO中的文件名
+     * @param objectName 存储在MinIO中的文件名
      * @return 不带签名的下载URL
      */
     @Override
-    public String getDownloadUrl(String originalFilename) {
+    public String getDownloadUrl(String objectName) {
         try {
-
             String minioHost = Utils.getLocalIP();
             // 构建不带签名的URL
             return String.format("http://%s:9000/%s/%s",
                     minioHost,
                     bucketName,
-                    originalFilename);
+                    objectName);
         } catch (Exception e) {
             log.error("FileServiceImpl#getDownloadUrl e:{}", e.getMessage());
             throw new RuntimeException("生成下载链接失败: " + e.getMessage(), e);

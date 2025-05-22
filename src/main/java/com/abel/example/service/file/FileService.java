@@ -13,4 +13,8 @@ public interface FileService {
     CompletableFuture<String> asyncUploadFileWithProgressWrapper(MultipartFile file, String uniqueFileName);
 
     double getProgress(String taskId);
+
+    String getFile();
+
+    boolean deleteFile(String fileName);
 }

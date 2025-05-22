@@ -3,6 +3,7 @@ package com.abel.example.controller;
 import com.abel.example.common.enums.ResultEnum;
 import com.abel.example.model.response.ResponseMessage;
 import com.abel.example.service.file.FileService;
+import com.abel.example.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,9 @@ public class FileUploadController {
     @Autowired
     @Qualifier("fileServiceImpl")
     private FileService fileService;
+
+    @Autowired
+    private UserService userService;
 
 
     @Operation(summary = "同步上传视频文件")
@@ -73,7 +77,7 @@ public class FileUploadController {
     }
 
 
-    @Operation(summary = "视频上传进度")
+    @Operation(summary = "视频上传进度(异步接口专用)")
     @GetMapping(value = "upload-progress")
     public ResponseMessage getProgress(@RequestParam String originalFilename) {
         double progress = fileService.getProgress(originalFilename);
@@ -83,15 +87,45 @@ public class FileUploadController {
         return ResponseMessage.success(progress);
     }
 
-    @Operation(summary = "获取文件的下载URL")
+    @Operation(summary = "根据视频名获取下载URL")
     @GetMapping(value = "file-download-url")
     public ResponseMessage getDownloadUrl(@RequestParam String originalFilename) {
         try {
-            String url = fileService.getDownloadUrl(originalFilename);
+            if (!originalFilename.equals(fileService.getFile())) {
+                return ResponseMessage.error(ResultEnum.NOT_FOUND.getCode(), ResultEnum.NOT_FOUND.getMsg());
+            }
+
+            String objectName = userService.getUserName() + "/" + originalFilename;
+
+            String url = fileService.getDownloadUrl(objectName);
             return ResponseMessage.success(url);
         } catch (Exception e) {
             log.error("FileUploadController#getDownloadUrl:{}", e.getMessage());
             return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+
+    @Operation(summary = "获取已经上传的视频")
+    @GetMapping(value = "get-file")
+    public ResponseMessage getFile() {
+        try {
+            String url = fileService.getFile();
+            return ResponseMessage.success(url);
+        } catch (Exception e) {
+            log.error("FileUploadController#getFile:{}", e.getMessage());
+            return ResponseMessage.error(e.getMessage());
+        }
+    }
+
+    @Operation(summary = "删除已经上传的视频")
+    @DeleteMapping("delete")
+    public ResponseMessage deleteVideo(@RequestParam String fileName) {
+        boolean success = fileService.deleteFile(fileName);
+        if (success) {
+            return ResponseMessage.success("文件删除成功");
+        } else {
+            return ResponseMessage.error("文件删除失败");
         }
     }
 }
