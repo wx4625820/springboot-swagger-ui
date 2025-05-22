@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
 
 /**
  * @auther wangxu
@@ -52,12 +51,12 @@ public class FileUploadController {
             return ResponseMessage.error("上传的文件为空");
         }
         try {
-            String taskId = UUID.randomUUID().toString();
+            // String taskId = UUID.randomUUID().toString();
 
             String originalFilename = file.getOriginalFilename();
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String uniqueFileName = taskId + fileExtension;
-            fileService.asyncUploadFileWithProgressWrapper(file, uniqueFileName)
+            // String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            // String uniqueFileName = taskId + fileExtension;
+            fileService.asyncUploadFileWithProgressWrapper(file, originalFilename)
                     .whenComplete((url, ex) -> {
                         if (ex != null) {
                             log.error("FileUploadController#asyncUploadFileWithProgress fail:{}", ex.getMessage());
@@ -66,7 +65,7 @@ public class FileUploadController {
                         }
                     });
 
-            return ResponseMessage.success(uniqueFileName);
+            return ResponseMessage.success(originalFilename);
         } catch (Exception e) {
             log.error("上传初始化失败, msg:{}", e.getMessage());
             return ResponseMessage.error(ResultEnum.SYSTEM_ERROR.getCode(), "上传初始化失败: " + e.getMessage());
@@ -76,8 +75,8 @@ public class FileUploadController {
 
     @Operation(summary = "视频上传进度")
     @GetMapping(value = "upload-progress")
-    public ResponseMessage getProgress(@RequestParam String uniqueFileName) {
-        double progress = fileService.getProgress(uniqueFileName);
+    public ResponseMessage getProgress(@RequestParam String originalFilename) {
+        double progress = fileService.getProgress(originalFilename);
         if (progress < 0) {
             return ResponseMessage.success(-1.0);
         }
@@ -86,9 +85,9 @@ public class FileUploadController {
 
     @Operation(summary = "获取文件的下载URL")
     @GetMapping(value = "file-download-url")
-    public ResponseMessage getDownloadUrl(@RequestParam String uniqueFileName) {
+    public ResponseMessage getDownloadUrl(@RequestParam String originalFilename) {
         try {
-            String url = fileService.getDownloadUrl(uniqueFileName);
+            String url = fileService.getDownloadUrl(originalFilename);
             return ResponseMessage.success(url);
         } catch (Exception e) {
             log.error("FileUploadController#getDownloadUrl:{}", e.getMessage());

@@ -48,41 +48,41 @@ public class FileServiceImpl implements FileService {
 
             // 生成唯一文件名
             String originalFilename = file.getOriginalFilename();
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String uniqueFileName = UUID.randomUUID() + fileExtension;
+            // String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            // String uniqueFileName = UUID.randomUUID() + fileExtension;
 
             // 上传文件
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(uniqueFileName)
+                            .object(originalFilename)
                             .stream(file.getInputStream(), file.getSize(), -1)
                             .contentType(file.getContentType())
                             .build());
 
             // 返回预签名下载URL（默认7天有效期）
-            return getDownloadUrl(uniqueFileName);
+            return getDownloadUrl(originalFilename);
         } catch (Exception e) {
             log.error("FileServiceImpl#uploadFile e:{}", e.getMessage());
             throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
         }
     }
 
-    private void updateProgress(String taskId, double progress) {
-        progressCache.put(taskId, progress);
+    private void updateProgress(String originalFilename, double progress) {
+        progressCache.put(originalFilename, progress);
     }
 
     @Override
-    public double getProgress(String taskId) {
-        return progressCache.getOrDefault(taskId, 0.0);
+    public double getProgress(String originalFilename) {
+        return progressCache.getOrDefault(originalFilename, 0.0);
     }
 
 
-    public CompletableFuture<String> asyncUploadFileWithProgressWrapper(MultipartFile file, String uniqueFileName) {
+    public CompletableFuture<String> asyncUploadFileWithProgressWrapper(MultipartFile file, String originalFilename) {
         try {
-            Path tempFilePath = Files.createTempFile("uniqueFileName", ".tmp");
+            Path tempFilePath = Files.createTempFile(UUID.randomUUID() + originalFilename, ".tmp");
             file.transferTo(tempFilePath.toFile());
-            return asyncUploadFileWithProgress(tempFilePath, file.getContentType(), file.getSize(), uniqueFileName);
+            return asyncUploadFileWithProgress(tempFilePath, file.getContentType(), file.getSize(), originalFilename);
         } catch (IOException e) {
             log.error("FileServiceImpl#asyncUploadFileWithProgressWrapper error: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to save temporary file", e);
@@ -90,7 +90,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Async
-    public CompletableFuture<String> asyncUploadFileWithProgress(Path tempFilePath, String contentType, long size, String uniqueFileName) {
+    public CompletableFuture<String> asyncUploadFileWithProgress(Path tempFilePath, String contentType, long size, String originalFilename) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 // 检查并创建桶
@@ -100,7 +100,7 @@ public class FileServiceImpl implements FileService {
 
                 ProgressTracker tracker = new ProgressTracker(size, bytesRead -> {
                     double progress = (double) bytesRead / size * 100;
-                    updateProgress(uniqueFileName, progress);
+                    updateProgress(originalFilename, progress);
                 });
 
                 try (InputStream fileStream = Files.newInputStream(tempFilePath);
@@ -109,15 +109,15 @@ public class FileServiceImpl implements FileService {
                     minioClient.putObject(
                             PutObjectArgs.builder()
                                     .bucket(bucketName)
-                                    .object(uniqueFileName)
+                                    .object(originalFilename)
                                     .stream(progressStream, size, -1)
                                     .contentType(contentType)
                                     .build());
 
-                    return getDownloadUrl(uniqueFileName);
+                    return getDownloadUrl(originalFilename);
                 }
             } catch (Exception e) {
-                updateProgress(uniqueFileName, -1);
+                updateProgress(originalFilename, -1);
                 log.error("FileServiceImpl#asyncUploadFileWithProgress error: {}", e.getMessage(), e);
                 throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
             } finally {
@@ -134,11 +134,11 @@ public class FileServiceImpl implements FileService {
     /**
      * 获取文件的下载URL（非签名方式）
      *
-     * @param fileName 存储在MinIO中的文件名
+     * @param originalFilename 存储在MinIO中的文件名
      * @return 不带签名的下载URL
      */
     @Override
-    public String getDownloadUrl(String fileName) {
+    public String getDownloadUrl(String originalFilename) {
         try {
 
             String minioHost = Utils.getLocalIP();
@@ -146,7 +146,7 @@ public class FileServiceImpl implements FileService {
             return String.format("http://%s:9000/%s/%s",
                     minioHost,
                     bucketName,
-                    fileName);
+                    originalFilename);
         } catch (Exception e) {
             log.error("FileServiceImpl#getDownloadUrl e:{}", e.getMessage());
             throw new RuntimeException("生成下载链接失败: " + e.getMessage(), e);
