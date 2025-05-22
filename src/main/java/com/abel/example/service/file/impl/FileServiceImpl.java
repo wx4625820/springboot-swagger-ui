@@ -76,8 +76,8 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-    private void updateProgress(String originalFilename, double progress) {
-        progressCache.put(originalFilename, progress);
+    private void updateProgress(String objectName, double progress) {
+        progressCache.put(objectName, progress);
     }
 
     @Override

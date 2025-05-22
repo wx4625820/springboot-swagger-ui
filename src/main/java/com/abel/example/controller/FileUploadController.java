@@ -80,7 +80,8 @@ public class FileUploadController {
     @Operation(summary = "视频上传进度(异步接口专用)")
     @GetMapping(value = "upload-progress")
     public ResponseMessage getProgress(@RequestParam String originalFilename) {
-        double progress = fileService.getProgress(originalFilename);
+        String objectName = userService.getUserName() + "/" + originalFilename;
+        double progress = fileService.getProgress(objectName);
         if (progress < 0) {
             return ResponseMessage.success(-1.0);
         }
