@@ -1,7 +1,8 @@
-package com.abel.example.service.user;
+package com.abel.example.service.user.impl;
 
 import com.abel.example.model.entity.User;
 import com.abel.example.dao.UserMapper;
+import com.abel.example.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -21,17 +22,31 @@ public class UserServiceImpl implements UserService {
     private UserMapper userMapper;
 
     /**
-     * @param username
+     * @param email
      * @return
      */
     @Override
-    public User getUserByUserName(String username) {
-        return userMapper.findByName(username);
+    public User getUserByEmail(String email) {
+        return userMapper.findUserByEmail(email);
+    }
+
+    /**
+     * @param userName
+     * @return
+     */
+    @Override
+    public User getUserByUserName(String userName) {
+        return userMapper.findByName(userName);
     }
 
     @Override
     public void create(User user) {
         userMapper.create(user);
+    }
+
+    @Override
+    public void update(User user) {
+        userMapper.update(user);
     }
 
     @Override

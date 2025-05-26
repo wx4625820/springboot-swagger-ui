@@ -47,29 +47,13 @@ public class FileServiceImpl implements FileService {
     @Override
     public String uploadFile(MultipartFile file) {
         try {
-            // 检查存储桶是否存在，不存在则创建
-            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-            if (!found) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-            }
+            String userName = userService.getUserName();
+            deleteAllUserVideos(userName); // 删除用户所有视频
 
-            // 生成唯一文件名
             String originalFilename = file.getOriginalFilename();
-            String objectName = userService.getUserName() + "/" + originalFilename;
-            // String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            // String uniqueFileName = UUID.randomUUID() + fileExtension;
+            String objectName = userName + "/" + originalFilename;
 
-            // 上传文件
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .stream(file.getInputStream(), file.getSize(), -1)
-                            .contentType(file.getContentType())
-                            .build());
-
-            // 返回预签名下载URL
-            return getDownloadUrl(objectName);
+            return uploadToMinio(file.getInputStream(), file.getSize(), file.getContentType(), objectName);
         } catch (Exception e) {
             log.error("FileServiceImpl#uploadFile e:{}", e.getMessage());
             throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
@@ -131,6 +115,8 @@ public class FileServiceImpl implements FileService {
         try {
             Path tempFilePath = Files.createTempFile(UUID.randomUUID() + originalFilename, ".tmp");
             file.transferTo(tempFilePath.toFile());
+            String userName = userService.getUserName();
+            deleteAllUserVideos(userName); // 删除用户所有视频
             return asyncUploadFileWithProgress(tempFilePath, file.getContentType(), file.getSize(), originalFilename);
         } catch (IOException e) {
             log.error("FileServiceImpl#asyncUploadFileWithProgressWrapper error: {}", e.getMessage(), e);
@@ -141,12 +127,9 @@ public class FileServiceImpl implements FileService {
     @Async
     public CompletableFuture<String> asyncUploadFileWithProgress(Path tempFilePath, String contentType, long size, String originalFilename) {
         String objectName = userService.getUserName() + "/" + originalFilename;
+
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // 检查并创建桶
-                if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-                    minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-                }
                 ProgressTracker tracker = new ProgressTracker(size, bytesRead -> {
                     double progress = (double) bytesRead / size * 100;
                     updateProgress(objectName, progress);
@@ -155,15 +138,7 @@ public class FileServiceImpl implements FileService {
                 try (InputStream fileStream = Files.newInputStream(tempFilePath);
                      ProgressInputStream progressStream = new ProgressInputStream(fileStream, tracker)) {
 
-                    minioClient.putObject(
-                            PutObjectArgs.builder()
-                                    .bucket(bucketName)
-                                    .object(objectName)
-                                    .stream(progressStream, size, -1)
-                                    .contentType(contentType)
-                                    .build());
-
-                    return getDownloadUrl(objectName);
+                    return uploadToMinio(progressStream, size, contentType, objectName);
                 }
             } catch (Exception e) {
                 updateProgress(objectName, -1);
@@ -200,4 +175,49 @@ public class FileServiceImpl implements FileService {
             throw new RuntimeException("生成下载链接失败: " + e.getMessage(), e);
         }
     }
+
+    private String uploadToMinio(InputStream inputStream, long size, String contentType, String objectName) throws Exception {
+        // 检查存储桶是否存在，不存在则创建
+        if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+        }
+
+        // 上传文件到 MinIO
+        minioClient.putObject(
+                PutObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .stream(inputStream, size, -1)
+                        .contentType(contentType)
+                        .build());
+
+        // 返回下载链接
+        return getDownloadUrl(objectName);
+    }
+
+
+    private void deleteAllUserVideos(String userName) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .prefix(userName + "/")
+                            .recursive(true)
+                            .build());
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                minioClient.removeObject(RemoveObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(item.objectName())
+                        .build());
+            }
+
+            log.info("删除用户[{}]所有视频成功", userName);
+        } catch (Exception e) {
+            log.error("删除用户[{}]视频失败: {}", userName, e.getMessage(), e);
+            throw new RuntimeException("删除用户视频失败: " + e.getMessage(), e);
+        }
+    }
+
 }
