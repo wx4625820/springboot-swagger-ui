@@ -22,6 +22,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -29,7 +30,7 @@ import java.util.Objects;
  * @date 2025/05/16
  */
 @RestController
-@RequestMapping(value = "users")
+@RequestMapping(value = "user")
 @Tag(name = "用户管理", description = "用户增删改查等")
 public class LoginController {
 
@@ -48,13 +49,13 @@ public class LoginController {
     /**
      * 登录
      *
-     * @param email
-     * @param password
      * @return
      */
     @Operation(summary = "用户登录")
     @PostMapping(value = "login")
-    public ResponseMessage login(@RequestParam("email") String email, @RequestParam("password") String password) {
+    public ResponseMessage login(@RequestBody User user) {
+        String email = user.getEmail();
+        String password = user.getPassword();
         if (!Utils.isValidEmail(email)) {
             return ResponseMessage.error(
                     ResultEnum.BAD_REQUEST.getCode(),
@@ -62,9 +63,9 @@ public class LoginController {
             );
         }
 
-        User user = userService.getUserByEmail(email);
-        if (user != null) {
-            if (user.getPassword().equals(password)) {
+        User userDb = userService.getUserByEmail(email);
+        if (userDb != null) {
+            if (userDb.getPassword().equals(password)) {
                 ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
                 attributes.getRequest().getSession().setAttribute("user", user); //将登陆用户信息存入到session域对象中
                 return ResponseMessage.success("email:" + email + "登录成功");
@@ -76,14 +77,15 @@ public class LoginController {
     /**
      * 注册
      *
-     * @param username
-     * @param password
      * @return
      */
     @Operation(summary = "用户注册")
     @PostMapping(value = "register")
-    public ResponseMessage register(@RequestParam("username") String username, @RequestParam("email") String email, @RequestParam("password") String password) {
+    public ResponseMessage register(@RequestBody User user) {
         try {
+            String username = user.getUsername();
+            String email = user.getEmail();
+            String password = user.getPassword();
 
             if (!Utils.isValidEmail(email)) {
                 return ResponseMessage.error(
@@ -91,9 +93,8 @@ public class LoginController {
                         "邮箱格式不正确！"
                 );
             }
-
-            User user = userService.getUserByUserName(username);
-            if (Objects.nonNull(user)) {
+            User userDb = userService.getUserByUserName(username);
+            if (Objects.nonNull(userDb)) {
                 return ResponseMessage.error(ResultEnum.BAD_REQUEST.getCode(), username + "已注册，请更换用户名！");
             }
 
@@ -109,8 +110,9 @@ public class LoginController {
 
 
     @Operation(summary = "忘记密码")
-    @PostMapping("/forgot-password")
-    public ResponseMessage forgotPassword(@RequestParam("email") String email) {
+    @PostMapping("forgot-password")
+    public ResponseMessage forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
         if (!Utils.isValidEmail(email)) {
             return ResponseMessage.error(
                     ResultEnum.BAD_REQUEST.getCode(),
@@ -141,11 +143,11 @@ public class LoginController {
     }
 
     @Operation(summary = "重设密码")
-    @PostMapping("/reset-password")
-    public ResponseMessage resetPassword(
-            @RequestParam("email") String email,
-            @RequestParam("code") String code,
-            @RequestParam("newPassword") String newPassword) {
+    @PostMapping("reset-password")
+    public ResponseMessage resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+        String newPassword = request.get("newPassword");
 
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         String sessionCode = (String) attr.getRequest().getSession().getAttribute("reset_code");
