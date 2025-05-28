@@ -2,6 +2,7 @@ package com.abel.example.dao;
 
 import com.abel.example.model.entity.User;
 import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -10,8 +11,8 @@ import org.apache.ibatis.annotations.Update;
  * @auther wangxu
  * @date 2025/05/16
  */
+@Mapper
 public interface UserMapper {
-
 
     @Select("SELECT id, username, email, password FROM tb_user WHERE email = #{email}")
     User findUserByEmail(String email);

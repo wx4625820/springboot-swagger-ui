@@ -1,10 +1,10 @@
 package com.abel.example.service.weaviate;
 
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.util.List;
 
 public interface WeaviateService {
-    boolean parseAndImport(MultipartFile file) throws IOException;
+    boolean importChunks(List<String> chunks);
+    List<String> search(String query);
 
 }

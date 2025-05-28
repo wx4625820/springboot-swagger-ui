@@ -41,6 +41,34 @@ public class OllamaServiceImpl implements OllamaService {
         return result;
     }
 
+    @Override
+    public String generateAnswer(String prompt) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost(url);
+            post.setHeader("Content-Type", "application/json");
+
+            // 构造请求体
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("model", "qwen3:0.6b");
+            payload.put("prompt", prompt);
+            payload.put("stream", false);
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            post.setEntity(new StringEntity(jsonPayload, StandardCharsets.UTF_8));
+
+            try (CloseableHttpResponse response = httpClient.execute(post)) {
+                String jsonResponse = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+
+                // 解析返回的 JSON
+                Map<String, Object> map = objectMapper.readValue(jsonResponse, Map.class);
+
+                return map.get("response").toString();
+            }
+        } catch (Exception e) {
+            return "调用生成接口失败：" + e.getMessage();
+        }
+    }
+
     private String buildPrompt(String resumeText) {
         return String.format("""
                 你是一个专业的中文简历顾问，请对以下简历进行分析，包括：

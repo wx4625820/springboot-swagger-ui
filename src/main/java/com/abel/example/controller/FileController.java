@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
  * @date 2025/05/16
  */
 @RestController
-@RequestMapping("file")
+@RequestMapping("/file")
 @Tag(name = "视频管理", description = "视频上传、下载等操作")
 @Slf4j
 public class FileController {
@@ -34,7 +34,7 @@ public class FileController {
 
 
     @Operation(summary = "同步上传视频文件")
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "upload")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "/upload")
     public ResponseMessage uploadFile(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseMessage.error("上传的文件为空");
@@ -49,17 +49,13 @@ public class FileController {
     }
 
     @Operation(summary = "异步上传视频文件")
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "async-upload")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "/async-upload")
     public ResponseMessage asyncUploadFileWithProgress(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseMessage.error("上传的文件为空");
         }
         try {
-            // String taskId = UUID.randomUUID().toString();
-
             String originalFilename = file.getOriginalFilename();
-            // String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            // String uniqueFileName = taskId + fileExtension;
             fileService.asyncUploadFileWithProgressWrapper(file, originalFilename)
                     .whenComplete((url, ex) -> {
                         if (ex != null) {
@@ -78,7 +74,7 @@ public class FileController {
 
 
     @Operation(summary = "视频上传进度(异步接口专用)")
-    @GetMapping(value = "upload-progress")
+    @GetMapping(value = "/upload-progress")
     public ResponseMessage getProgress(@RequestParam String originalFilename) {
         String objectName = userService.getUserName() + "/" + originalFilename;
         double progress = fileService.getProgress(objectName);
@@ -89,7 +85,7 @@ public class FileController {
     }
 
     @Operation(summary = "根据视频名获取下载URL")
-    @GetMapping(value = "file-download-url")
+    @GetMapping(value = "/file-download-url")
     public ResponseMessage getDownloadUrl(@RequestParam String originalFilename) {
         try {
             if (!originalFilename.equals(fileService.getFile())) {
@@ -108,7 +104,7 @@ public class FileController {
 
 
     @Operation(summary = "获取已经上传的视频")
-    @GetMapping(value = "get-file")
+    @GetMapping(value = "/get-file")
     public ResponseMessage getFile() {
         try {
             String url = fileService.getFile();
@@ -120,7 +116,7 @@ public class FileController {
     }
 
     @Operation(summary = "删除已经上传的视频")
-    @DeleteMapping("delete")
+    @DeleteMapping("/delete")
     public ResponseMessage deleteVideo(@RequestParam String fileName) {
         boolean success = fileService.deleteFile(fileName);
         if (success) {

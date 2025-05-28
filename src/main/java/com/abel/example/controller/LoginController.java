@@ -3,19 +3,21 @@ package com.abel.example.controller;
 
 import com.abel.example.common.enums.ResultEnum;
 import com.abel.example.common.util.Utils;
+import com.abel.example.model.dto.RequestDTO.ForgotPasswordRequest;
+import com.abel.example.model.dto.RequestDTO.ResetPasswordRequest;
 import com.abel.example.model.response.ResponseMessage;
 import com.abel.example.model.entity.User;
 import com.abel.example.service.mail.MailService;
 import com.abel.example.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -23,7 +25,7 @@ import java.util.Objects;
  * @date 2025/05/16
  */
 @RestController
-@RequestMapping(value = "user")
+@RequestMapping(value = "/user")
 @Tag(name = "用户管理", description = "用户增删改查等")
 public class LoginController {
 
@@ -39,7 +41,7 @@ public class LoginController {
      * @return
      */
     @Operation(summary = "用户登录")
-    @PostMapping(value = "login")
+    @PostMapping(value = "/login")
     public ResponseMessage login(@RequestBody User user) {
         String email = user.getEmail();
         String password = user.getPassword();
@@ -67,7 +69,7 @@ public class LoginController {
      * @return
      */
     @Operation(summary = "用户注册")
-    @PostMapping(value = "register")
+    @PostMapping(value = "/register")
     public ResponseMessage register(@RequestBody User user) {
         try {
             String username = user.getUsername();
@@ -97,9 +99,9 @@ public class LoginController {
 
 
     @Operation(summary = "忘记密码")
-    @PostMapping("forgot-password")
-    public ResponseMessage forgotPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
+    @PostMapping("/forgot-password")
+    public ResponseMessage forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        String email = request.getEmail();
         if (!Utils.isValidEmail(email)) {
             return ResponseMessage.error(
                     ResultEnum.BAD_REQUEST.getCode(),
@@ -130,11 +132,11 @@ public class LoginController {
     }
 
     @Operation(summary = "重设密码")
-    @PostMapping("reset-password")
-    public ResponseMessage resetPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String code = request.get("code");
-        String newPassword = request.get("newPassword");
+    @PostMapping("/reset-password")
+    public ResponseMessage resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        String email = request.getEmail();
+        String code = request.getCode();
+        String newPassword = request.getNewPassword();
 
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         String sessionCode = (String) attr.getRequest().getSession().getAttribute("reset_code");

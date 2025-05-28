@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping(value = "pdf")
+@RequestMapping(value = "/pdf")
 @Tag(name = "pdf管理", description = "解析pdf文件")
 public class PdfController {
 
     @Autowired
     private PdfService pdfService;
 
-    @PostMapping(value = "upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "/upload")
     public ResponseMessage uploadPdf(@RequestParam("file") MultipartFile file) {
         try {
             String text = pdfService.parsePdf(file);
