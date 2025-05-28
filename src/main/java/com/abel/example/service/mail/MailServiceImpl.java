@@ -1,6 +1,5 @@
-package com.abel.example.service.mail.impl;
+package com.abel.example.service.mail;
 
-import com.abel.example.service.mail.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 

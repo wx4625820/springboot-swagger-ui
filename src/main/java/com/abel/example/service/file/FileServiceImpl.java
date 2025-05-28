@@ -1,10 +1,9 @@
-package com.abel.example.service.file.impl;
+package com.abel.example.service.file;
 
 
 import com.abel.example.common.util.Utils;
-import com.abel.example.service.file.FileService;
-import com.abel.example.service.file.util.ProgressInputStream;
-import com.abel.example.service.file.util.ProgressTracker;
+import com.abel.example.common.util.ProgressInputStream;
+import com.abel.example.common.util.ProgressTracker;
 import com.abel.example.service.user.UserService;
 import com.google.common.collect.Maps;
 import io.minio.*;

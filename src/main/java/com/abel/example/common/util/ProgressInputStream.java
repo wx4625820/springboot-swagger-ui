@@ -1,4 +1,4 @@
-package com.abel.example.service.file.util;
+package com.abel.example.common.util;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -23,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("file")
 @Tag(name = "视频管理", description = "视频上传、下载等操作")
 @Slf4j
-public class FileUploadController {
+public class FileController {
 
     @Autowired
     @Qualifier("fileServiceImpl")

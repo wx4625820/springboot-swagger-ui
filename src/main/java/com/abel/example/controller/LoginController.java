@@ -3,24 +3,17 @@ package com.abel.example.controller;
 
 import com.abel.example.common.enums.ResultEnum;
 import com.abel.example.common.util.Utils;
-import com.abel.example.model.entity.VideoMetaData;
-import com.abel.example.model.entity.VideoMetaDataWrapper;
 import com.abel.example.model.response.ResponseMessage;
 import com.abel.example.model.entity.User;
-import com.abel.example.service.file.FileService;
 import com.abel.example.service.mail.MailService;
-import com.abel.example.service.python.PythonService;
 import com.abel.example.service.user.UserService;
-import com.alibaba.fastjson.JSON;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.Objects;
@@ -39,12 +32,6 @@ public class LoginController {
 
     @Autowired
     private MailService mailService;
-
-    @Autowired
-    private PythonService pythonService;
-
-    @Autowired
-    private FileService fileService;
 
     /**
      * 登录
@@ -101,7 +88,7 @@ public class LoginController {
             userService.create(new User(username, email, password));
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             attributes.getRequest().getSession().setAttribute("user", new User(username, email, password)); //将登陆用户信息存入到session域对象中
-            return ResponseMessage.success(username);
+            return ResponseMessage.success(username + "注册成功");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -187,55 +174,5 @@ public class LoginController {
         attr.getRequest().getSession().removeAttribute("reset_code_time");
 
         return ResponseMessage.success("密码重置成功");
-    }
-
-
-    /**
-     * 登录页 TODO
-     *
-     * @return
-     */
-    @Operation(summary = "获取登录页信息")
-    @GetMapping(value = "login")
-    public String login() {
-        return "home/login";
-    }
-
-    /**
-     * 注册页面 TODO
-     *
-     * @return
-     */
-    @Operation(summary = "获取注册页信息")
-    @GetMapping(value = "register")
-    public String register() {
-        return "home/register";
-    }
-
-    /**
-     * 注销
-     *
-     * @return
-     */
-    @Operation(summary = "用户注销")
-    @PostMapping(value = "logout")
-    public String logout() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        attributes.getRequest().getSession().removeAttribute("user");
-        return "home/login";
-    }
-
-
-    /**
-     * 注销
-     *
-     * @return
-     */
-    @Operation(summary = "测试接口,后续删掉")
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "upload")
-    public String test(@RequestParam("file") MultipartFile file) {
-        String result = fileService.uploadFile(file);
-        VideoMetaDataWrapper res = pythonService.analyzeVideo(result);
-        return JSON.toJSONString(res);
     }
 }
