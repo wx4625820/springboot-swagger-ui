@@ -56,7 +56,7 @@ public class LoginController {
         if (userDb != null) {
             if (userDb.getPassword().equals(password)) {
                 ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-                attributes.getRequest().getSession().setAttribute("user", user); //将登陆用户信息存入到session域对象中
+                attributes.getRequest().getSession().setAttribute("user", userDb); //将登陆用户信息存入到session域对象中
                 return ResponseMessage.success("email:" + email + "登录成功");
             }
         }
