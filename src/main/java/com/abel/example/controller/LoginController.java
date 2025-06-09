@@ -1,6 +1,7 @@
 package com.abel.example.controller;
 
 
+import com.abel.example.common.component.DailyCounter;
 import com.abel.example.common.enums.ResultEnum;
 import com.abel.example.common.util.Utils;
 import com.abel.example.model.dto.RequestDTO.ForgotPasswordRequest;
@@ -35,6 +36,16 @@ public class LoginController {
     @Autowired
     private MailService mailService;
 
+    @Autowired
+    private DailyCounter dailyCounter;
+
+
+    @Operation(summary = "获取今日使用次数")
+    @GetMapping(value = "/getCount")
+    public ResponseMessage getCount() {
+        int currentCount = dailyCounter.incrementAndGet();
+        return ResponseMessage.success("今日已调用次数：" + currentCount);
+    }
     /**
      * 登录
      *

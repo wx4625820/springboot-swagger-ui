@@ -22,9 +22,11 @@ public class WeaviateServiceImpl implements WeaviateService {
     private static final int BATCH_SIZE = 10;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-
     @Value("${weaviate.graphql-url}")
-    private String url;
+    private String graphqlUrl;
+
+    @Value("${weaviate.batch-url}")
+    private String batchUrl;
 
     @Override
     public boolean importChunks(List<String> chunks) {
@@ -46,14 +48,13 @@ public class WeaviateServiceImpl implements WeaviateService {
                     objectsBatch.add(obj);
                 }
 
-                // 修正点：将 objectsBatch 包装成符合 Weaviate 批量导入的格式
                 Map<String, Object> batchPayload = new HashMap<>();
-                batchPayload.put("objects", objectsBatch); // 关键：将数组放在 "objects" 字段下
+                batchPayload.put("objects", objectsBatch);
 
                 String jsonPayload = objectMapper.writeValueAsString(batchPayload);
                 System.out.println("Payload: " + jsonPayload);
 
-                HttpPost post = new HttpPost(url);
+                HttpPost post = new HttpPost(batchUrl);
                 post.setHeader("Content-Type", "application/json");
                 post.setEntity(new StringEntity(jsonPayload, StandardCharsets.UTF_8));
 
@@ -76,11 +77,10 @@ public class WeaviateServiceImpl implements WeaviateService {
 
     @Override
     public List<String> search(String query) {
-        // 构建安全的GraphQL查询
         JSONObject graphqlPayload = buildGraphQLPayload(query);
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost(url);
+            HttpPost post = new HttpPost(graphqlUrl);
             post.setHeader("Content-Type", "application/json");
             post.setEntity(new StringEntity(graphqlPayload.toString(), StandardCharsets.UTF_8));
 
@@ -117,8 +117,7 @@ public class WeaviateServiceImpl implements WeaviateService {
     private List<String> parseSearchResults(String jsonResponse) throws Exception {
         Map<String, Object> responseMap = objectMapper.readValue(
                 jsonResponse,
-                new TypeReference<Map<String, Object>>() {
-                }
+                new TypeReference<Map<String, Object>>() {}
         );
 
         if (responseMap.containsKey("errors")) {
