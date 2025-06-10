@@ -165,7 +165,7 @@ public class FileServiceImpl implements FileService {
         try {
             String minioHost = Utils.getLocalIP();
             // 构建不带签名的URL
-            return String.format("http://%s:9000/%s/%s",
+            return String.format("http://%s:9001/%s/%s",
                     minioHost,
                     bucketName,
                     objectName);
@@ -214,8 +214,7 @@ public class FileServiceImpl implements FileService {
 
             log.info("删除用户[{}]所有视频成功", userName);
         } catch (Exception e) {
-            log.error("删除用户[{}]视频失败: {}", userName, e.getMessage(), e);
-            throw new RuntimeException("删除用户视频失败: " + e.getMessage(), e);
+            return;
         }
     }
 
