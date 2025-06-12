@@ -26,6 +26,9 @@ public class RagServiceImpl implements RagService {
         return ollamaService.generateAnswer(prompt);
     }
 
+
+
+
     private String buildPrompt(String question, String context) {
         return "以下是与问题相关的知识片段，请根据这些内容用中文回答问题：\n\n"
                 + context + "\n\n问题：" + question;
