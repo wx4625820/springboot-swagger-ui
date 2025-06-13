@@ -46,6 +46,7 @@ public class LoginController {
         int currentCount = dailyCounter.incrementAndGet();
         return ResponseMessage.success("今日已调用次数：" + currentCount);
     }
+
     /**
      * 登录
      *
@@ -187,5 +188,27 @@ public class LoginController {
         attr.getRequest().getSession().removeAttribute("reset_code_time");
 
         return ResponseMessage.success("密码重置成功");
+    }
+
+    @Operation(summary = "修改密码（已登录）")
+    @PostMapping("/change-password")
+    public ResponseMessage changePassword(@RequestParam String oldPassword,
+                                          @RequestParam String newPassword) {
+        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        User user = (User) attr.getRequest().getSession().getAttribute("user");
+
+        if (user == null) {
+            return ResponseMessage.error(ResultEnum.UNAUTHORIZED.getCode(), "未登录");
+        }
+
+        User userDb = userService.getUserByEmail(user.getEmail());
+
+        if (!userDb.getPassword().equals(oldPassword)) {
+            return ResponseMessage.error("原密码不正确");
+        }
+
+        userDb.setPassword(newPassword);
+        userService.update(userDb); // 确保你有实现 update 方法
+        return ResponseMessage.success("密码修改成功");
     }
 }
