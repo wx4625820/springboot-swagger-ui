@@ -81,12 +81,17 @@
             <artifactId>guava</artifactId>
             <version>31.1-jre</version>
         </dependency>
-        <dependency>
-            <groupId>io.minio</groupId>
-            <artifactId>minio</artifactId>
-            <version>8.5.7</version>
-        </dependency>
 
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.25.66</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3-transfer-manager</artifactId>
+            <version>2.25.66</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.pdfbox</groupId>

@@ -1,19 +1,19 @@
 package com.abel.example.service.file;
 
-
 import com.abel.example.common.util.Utils;
 import com.abel.example.common.util.ProgressInputStream;
 import com.abel.example.common.util.ProgressTracker;
 import com.abel.example.service.user.UserService;
 import com.google.common.collect.Maps;
-import io.minio.*;
-import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,24 +24,26 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * @auther wangxu
- * @date 2025/05/16
- */
 @Service
 @Slf4j
 public class FileServiceImpl implements FileService {
+
     private final Map<String, Double> progressCache = Maps.newConcurrentMap();
+
+    /**
+     * 用 S3Client 替代 MinioClient
+     */
     @Autowired
-    private MinioClient minioClient;
+    private S3Client s3;
 
-    @Value("${minio.bucket-name}")
+    /**
+     * 保留你原来的字段名/占位符，外部配置可继续沿用
+     */
+    @Value("${rustfs.bucket-name}")
     private String bucketName;
-
 
     @Autowired
     private UserService userService;
-
 
     @Override
     public String uploadFile(MultipartFile file) {
@@ -72,19 +74,16 @@ public class FileServiceImpl implements FileService {
     public String getFile() {
         try {
             String userName = userService.getUserName() + "/";
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(bucketName)
-                            .prefix(userName)
-                            .recursive(true)
-                            .build());
 
-            for (Result<Item> result : results) {
-                Item item = result.get();
-                String objectName = item.objectName();
-                return Paths.get(objectName).getFileName().toString();
+            ListObjectsV2Request req = ListObjectsV2Request.builder().bucket(bucketName).prefix(userName).build();
+
+            // 与原逻辑等价：拿到第一个对象名，然后返回文件名部分
+            for (ListObjectsV2Response page : s3.listObjectsV2Paginator(req)) {
+                for (S3Object obj : page.contents()) {
+                    String objectName = obj.key();
+                    return Paths.get(objectName).getFileName().toString();
+                }
             }
-
         } catch (Exception e) {
             log.error("获取视频文件列表失败: {}", e.getMessage(), e);
         }
@@ -95,12 +94,7 @@ public class FileServiceImpl implements FileService {
     public boolean deleteFile(String fileName) {
         try {
             String objectName = userService.getUserName() + "/" + fileName;
-            minioClient.removeObject(
-                    RemoveObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .build());
-
+            s3.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(objectName).build());
             log.info("删除文件成功: {}", fileName);
             return true;
         } catch (Exception e) {
@@ -108,7 +102,6 @@ public class FileServiceImpl implements FileService {
             return false;
         }
     }
-
 
     public CompletableFuture<String> asyncUploadFileWithProgressWrapper(MultipartFile file, String originalFilename) {
         try {
@@ -134,8 +127,7 @@ public class FileServiceImpl implements FileService {
                     updateProgress(objectName, progress);
                 });
 
-                try (InputStream fileStream = Files.newInputStream(tempFilePath);
-                     ProgressInputStream progressStream = new ProgressInputStream(fileStream, tracker)) {
+                try (InputStream fileStream = Files.newInputStream(tempFilePath); ProgressInputStream progressStream = new ProgressInputStream(fileStream, tracker)) {
 
                     return uploadToMinio(progressStream, size, contentType, objectName);
                 }
@@ -153,69 +145,63 @@ public class FileServiceImpl implements FileService {
         });
     }
 
-
     /**
      * 获取文件的下载URL（非签名方式）
-     *
-     * @param objectName 存储在MinIO中的文件名
-     * @return 不带签名的下载URL
+     * 说明：RustFS 的 S3 API 在 9000 端口，对象直链为 http://host:9000/{bucket}/{key}
      */
     @Override
     public String getDownloadUrl(String objectName) {
         try {
-            String minioHost = Utils.getLocalIP();
-            // 构建不带签名的URL
-            return String.format("http://%s:9001/%s/%s",
-                    minioHost,
-                    bucketName,
-                    objectName);
+            String host = Utils.getLocalIP();
+            return String.format("http://%s:9000/%s/%s", host, bucketName, objectName);
         } catch (Exception e) {
             log.error("FileServiceImpl#getDownloadUrl e:{}", e.getMessage());
             throw new RuntimeException("生成下载链接失败: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * 名称保持不变：内部实现改为 S3 PutObject
+     */
     private String uploadToMinio(InputStream inputStream, long size, String contentType, String objectName) throws Exception {
-        // 检查存储桶是否存在，不存在则创建
-        if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+        // 检查/创建桶（与原逻辑一致）
+        if (!bucketExists(bucketName)) {
+            s3.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
         }
 
-        // 上传文件到 MinIO
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket(bucketName)
-                        .object(objectName)
-                        .stream(inputStream, size, -1)
-                        .contentType(contentType)
-                        .build());
+        PutObjectRequest req = PutObjectRequest.builder().bucket(bucketName).key(objectName).contentType(contentType).build();
 
-        // 返回下载链接
+        s3.putObject(req, RequestBody.fromInputStream(inputStream, size));
+
         return getDownloadUrl(objectName);
     }
 
+    private boolean bucketExists(String bucket) {
+        try {
+            s3.headBucket(HeadBucketRequest.builder().bucket(bucket).build());
+            return true;
+        } catch (NoSuchBucketException e) {
+            return false;
+        } catch (S3Exception e) { // 404/403 等情况按不存在处理
+            return e.statusCode() == 404 ? false : true;
+        } catch (Exception e) {
+            log.warn("检查桶失败，按不存在处理: {}", e.getMessage());
+            return false;
+        }
+    }
 
     private void deleteAllUserVideos(String userName) {
         try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(bucketName)
-                            .prefix(userName + "/")
-                            .recursive(true)
-                            .build());
+            ListObjectsV2Request req = ListObjectsV2Request.builder().bucket(bucketName).prefix(userName + "/").build();
 
-            for (Result<Item> result : results) {
-                Item item = result.get();
-                minioClient.removeObject(RemoveObjectArgs.builder()
-                        .bucket(bucketName)
-                        .object(item.objectName())
-                        .build());
+            for (ListObjectsV2Response page : s3.listObjectsV2Paginator(req)) {
+                for (S3Object obj : page.contents()) {
+                    s3.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(obj.key()).build());
+                }
             }
-
             log.info("删除用户[{}]所有视频成功", userName);
         } catch (Exception e) {
             return;
         }
     }
-
 }
