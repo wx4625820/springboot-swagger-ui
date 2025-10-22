@@ -76,7 +76,7 @@ public class LargeController {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost("http://192.168.1.105:5000/api/resume/analyze");
+            HttpPost post = new HttpPost("http://192.168.31.74:5000/api/resume/analyze");
             post.setHeader("Content-Type", "application/json");
 
             // 构造 JSON 数据
@@ -108,7 +108,7 @@ public class LargeController {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost("http://192.168.1.105:5000/api/video/analyze_interview");
+            HttpPost post = new HttpPost("http://192.168.31.74:5000/api/video/analyze_interview");
             post.setHeader("Content-Type", "application/json");
 
             // 构造 JSON 数据
